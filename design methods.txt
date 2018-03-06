@@ -1,0 +1,181 @@
+Find a Project Management Glossary to reference patterns.
+
+Procurement
+Supply Chain Method -
+
+Time Management Books
+Agile estimation by Mike Cohn
+
+I have been using kanban method
+
+- Time Management
+	a. Pomodoro - 25 minute working and then 5 minute breaks
+
+/********************************************************************************************************************/
+	
+	b. Critical Chain - The series of tasks that is crucial for completing your tasks.
+	Say you are fixiing a truck, have a stack of 11 troubleshooting tasks, He charted out all
+	the tasks he had to complete and how much time they required.
+
+	|--------------------------------|       |----------------------------|       |------------------|
+	| Checking spark Plugs 15 minutes| ----> | Check Fuel System 10 hours | ----->| battery 30 min   | ---|
+	|--------------------------------|       |----------------------------|       |------------------|    |
+													      |
+	|-----------------------------------------------------------------------------------------------------|
+	|
+	|     |-----------------------|
+	|---->|	Air Filter 20 hours   |
+	      |-----------------------|
+
+	You must be careful because Critical Path is focused only on time and time only.
+	Lets say that one task took 20 hours. And one took ten minutes and another took 6 hours
+	Critical Chain focuses on which tasks will take the longest time and only chart those
+	difficult paths.
+
+	an example would look like this:
+
+	|----------------------------|	      |----------------------------|    |------------------------|    |----------|
+	| Check Fuel System 10 Hours |------->| Air Filter 20 hours        |----| Project Buffer 3 hours |--->| Deadline |
+	|----------------------------|	      |----------------------------|    |------------------------|    |----------|
+
+	What really is important to critical chain is the end goal. A time buffer is set up
+	so that it can be brochured out to lesser tasks.
+
+/***************************************************************************************************************************/
+
+	c. SCRUM Method - Restart and reengage a project or product. Product backlog which is a wishlist or goals set
+	Sprint Baclog is a selection of features from the Product Backlog or goals and developing a timeline for accomplishing
+	The goals in the Sprint Backlog. Sprint Backlog's have deadlines and a pre ordered series of events.
+
+	You then take your sprint log and make a burn down list. Where you plot your feature and goals over a period 
+	of time.
+
+										     Burn Down Chart
+	|------------------------|		 |----------------------|	 | \
+	|  Product Backlog       |		 | Sprint Log		|	 |  \
+	|			 |		 |			|	T|   \______
+	| a. Feature 1           |-------------->|a.			|------>I|          \
+	| b. Requirement	 |		 |b.			|	M|           \___________
+	| c. feature 2		 |		 |e.			|	E| 			 \
+	| d. feature 3		 |		 |----------------------|	 |----|-----|-------------|--
+	| e. feature 4		 |		 				      a	    b            e
+	|------------------------|		 				       Events or Features
+
+										Flip axis on chart.
+
+	d. Agile Mashup
+
+/****************************************************************************************************************************/
+
+- What Makes An Effective Council
+
+	a. Have the ability to listen to members and liten to others.
+
+/****************************************************************************************************************************/
+
+-Monte Carlo Simultaion
+	a. Where we kind of know what is happening but we want to understand more about something. You take multiple
+	unknown variables and start drawing paths to those events or variables. The Arrows show influence rather than
+	time or procudure.
+
+	b. A good way to think about Monte Carlo simutlations is in consideration to how much money certain outcomes
+	will take.
+	   _____________
+	  /	 	\
+	 /		 \
+	/     Revenue	  \		      ____________
+	\		  /\		     /		  \			_____________
+	 \		 /  \-------------->/ Competitors  \		       /	     \
+	  \_____________/	            \______________/\		      / Profits	      \
+							     \-------------->/_________________\
+										     /|\
+									     _________|
+	____________________		________________		    /
+	|		    |		|		|		   /
+	| Workers	    |---------->| Supplies 	|_________________/
+	|___________________|		|_______________|
+	c. It's a series of if then than what should we do. Companies will try to simulate how employees will
+	work together and the cost of supplies for a project.
+							     
+
+/**************************************************************************************************************************/
+
+- Agile Manifesto
+
+	focus on getting the inputs needed to make your plan is not a part of Agile.
+	PMI is agile's contrast which is a take on waterfall.
+
+	In the Agile Manifesto it was decided that:
+
+	Individuals and interactions over processes and tools
+	Working software over comprehensive documentation
+	Customer collaboration over contract negotiation
+	Responding to change over following a plan
+
+	In Agile you are focuse on getting a working team and a working product first
+	When talking about customer collaboration we want to focus on working with your customers
+	rather than drawing up contracts which will set up a adversarial relationship with your sponsor
+	or customers.
+
+	- Principles behind the Agile manifesto
+		a. Highest priority is to deliver sooner to satisfy the customer.
+
+		b. Weclome changing requirements even late in development. Harness change for the customer's advantage
+
+		c. Deliver working software frequently, from a 
+		   couple of weeks to a couple of months, with a 
+		   preference to the shorter timescale.
+
+		d. Business people and developers must work 
+		   together daily throughout the project.
+
+		e. Build projects around motivated individuals. 
+		   Give them the environment and support they need, 
+		   and trust them to get the job done.
+
+		f. The most efficient and effective method of 
+		   conveying information to and within a development 
+		   team is face-to-face conversation.
+
+		g. Working software is the primary measure of progress.
+
+		h. Agile processes promote sustainable development. 
+		   The sponsors, developers, and users should be able 
+		   to maintain a constant pace indefinitely.
+
+/*****************************************************************************************************************
+-Test Driven Development
+
+	a. Depends on making test cases for the development of your project.
+	b. Find a problem where your product could solve it. You also need to think about exceptions or
+	   edge cases.
+
+	c. Need to think about inputs and what the potential outputs can be.
+
+	d. Goal is to automate testing check to make sure that the test will fail when you give it a Null
+	   input.
+
+	- Its important to know that there are two major components that are crucial for test driven development
+	  those components are:
+
+		1. Test-First Development
+			- Write the test.
+			- Check if the test fails.
+			- Write only enough code.
+			Tip: this step focuses more on setting up your tests
+			     and make sure your code is seperate from the test itself.
+
+		After those are accomplished move to:
+		Keep in mind that you will be flipping back in forth
+		between these two components. This is because you may need to
+		develop a new test for a different situation consequently you
+		will need to refactor your code.
+
+		2. Refactoring
+			- Check if all tests succeed
+			- refactor some code
+			- update failing tests and correct regressions.
+			Tip: _focus_ alignment of the design
+			     this step is where you correct problems with the product.
+
+Homework: Go to agilescout.com and read up on what software is best for project management.
