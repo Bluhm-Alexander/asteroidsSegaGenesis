@@ -1,0 +1,3 @@
+20   Big Asteroid
+50   Medium Asteroid
+100 Small Asteroid

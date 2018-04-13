@@ -17,15 +17,15 @@ I have been using kanban method
 	Say you are fixiing a truck, have a stack of 11 troubleshooting tasks, He charted out all
 	the tasks he had to complete and how much time they required.
 
-	|--------------------------------|       |----------------------------|       |------------------|
-	| Checking spark Plugs 15 minutes| ----> | Check Fuel System 10 hours | ----->| battery 30 min   | ---|
-	|--------------------------------|       |----------------------------|       |------------------|    |
-													      |
-	|-----------------------------------------------------------------------------------------------------|
+	|---------------------------------|        |----------------------------|        |---------------------------|
+	| Checking spark Plugs 15 minutes | -----> | Check Fuel System 10 hours | ------>| battery 30 min   	     | ---|
+	|---------------------------------|        |----------------------------|        |---------------------------|    |
+							   			           				  |
+	|-----------------------------------------------------------------------------------------------------------------|
 	|
-	|     |-----------------------|
-	|---->|	Air Filter 20 hours   |
-	      |-----------------------|
+	|     |----------------------------------------|
+	|---->|	Air Filter 20 hours   		       |
+	      |----------------------------------------|
 
 	You must be careful because Critical Path is focused only on time and time only.
 	Lets say that one task took 20 hours. And one took ten minutes and another took 6 hours
@@ -34,9 +34,9 @@ I have been using kanban method
 
 	an example would look like this:
 
-	|----------------------------|	      |----------------------------|    |------------------------|    |----------|
-	| Check Fuel System 10 Hours |------->| Air Filter 20 hours        |----| Project Buffer 3 hours |--->| Deadline |
-	|----------------------------|	      |----------------------------|    |------------------------|    |----------|
+	|----------------------------|        |---------------------|    |------------------------|    |----------|
+	| Check Fuel System 10 Hours |------->| Air Filter 20 hours |----| Project Buffer 3 hours |--->| Deadline |
+	|----------------------------|        |---------------------|    |------------------------|    |----------|
 
 	What really is important to critical chain is the end goal. A time buffer is set up
 	so that it can be brochured out to lesser tasks.
@@ -48,20 +48,20 @@ I have been using kanban method
 	The goals in the Sprint Backlog. Sprint Backlog's have deadlines and a pre ordered series of events.
 
 	You then take your sprint log and make a burn down list. Where you plot your feature and goals over a period 
-	of time.
+	of time.|
 
 										     Burn Down Chart
-	|------------------------|		 |----------------------|	 | \
-	|  Product Backlog       |		 | Sprint Log		|	 |  \
-	|			 |		 |			|	T|   \______
-	| a. Feature 1           |-------------->|a.			|------>I|          \
-	| b. Requirement	 |		 |b.			|	M|           \___________
-	| c. feature 2		 |		 |e.			|	E| 			 \
-	| d. feature 3		 |		 |----------------------|	 |----|-----|-------------|--
-	| e. feature 4		 |		 				      a	    b            e
-	|------------------------|		 				       Events or Features
+	|--------------------|		 |--------------|	  | \
+	|  Product Backlog   |		 | Sprint Log   |	  |  \
+	|		     |		 |	        |	T |   \_____________
+	| a. Feature 1       |---------->|a.	        |------>I |                 \
+	| b. Requirement     |		 |b.	        |	M |                  \______________________
+	| c. feature 2	     |		 |e.	        |	E | 		       		            \
+	| d. feature 3	     |		 |--------------| 	  |----|------------|------------------------|--
+	| e. feature 4	     |				               a	    b                        e
+	|--------------------|				           Events or Features
 
-										Flip axis on chart.
+								Flip axis on chart.
 
 	d. Agile Mashup
 
@@ -81,19 +81,19 @@ I have been using kanban method
 	b. A good way to think about Monte Carlo simutlations is in consideration to how much money certain outcomes
 	will take.
 	   _____________
-	  /	 	\
-	 /		 \
-	/     Revenue	  \		      ____________
-	\		  /\		     /		  \			_____________
-	 \		 /  \-------------->/ Competitors  \		       /	     \
-	  \_____________/	            \______________/\		      / Profits	      \
-							     \-------------->/_________________\
-										     /|\
-									     _________|
-	____________________		________________		    /
-	|		    |		|		|		   /
-	| Workers	    |---------->| Supplies 	|_________________/
-	|___________________|		|_______________|
+	  /	              \
+	 /	               \
+	/     Revenue           \	    ____________
+	\	               /\	   /	            \		     _____________
+	 \	              /  \-------------->/ Competitors      \		    /		\
+	  \_____________/	            	  \______________/\	   / Profits		 \
+					                 \-------------->/_______________ \
+								     /
+								    /
+	__________________	 ________________		   /
+	|		    |	 |		|		  /
+	| Workers	    	    |---------->| Supplies 	|________________/
+	|________________ _|	 |_______________|
 	c. It's a series of if then than what should we do. Companies will try to simulate how employees will
 	work together and the cost of supplies for a project.
 							     
@@ -179,3 +179,105 @@ I have been using kanban method
 			     this step is where you correct problems with the product.
 
 Homework: Go to agilescout.com and read up on what software is best for project management.
+
+/****************************************************************************************************************
+ - Kanban
+
+	Three Major Facets of Kanban:
+		1. Visualize your work
+		2. limit your work and progress
+		3. adapt and improve your flow and work
+	kanban stands for sign board.
+
+/****************************************************************************************************************
+
+ - Time Budgets
+
+	Much like a monatary budget you subdivide your time into several different categories
+	
+	It helps to break your time up into committed and discretionary items
+	another way to refer to it is structured time and unstructured time 
+
+/*****************************************************************************************************************/
+
+ - EVM
+
+	Earned Value Management
+		1. This is where you find a parameter to measure peformance by such as a budget.
+		2. Using this method you can determine if giving a larger budget to a program to
+		    see if performance improves.
+
+/****************************************************************************************************************/
+
+ - Critical Chain
+
+	Applied to both pre planning and also you can apply it to existing processes.
+	It's resource aware.
+	Difference between Critical Path is that Path is more of a abstract sort of stepping system
+
+	Both Critical Chain and Critical Path are both fixed on reducing time wasting maximizing
+	performance. 
+
+	It's good to think about critical path as an abstraction of critical chain.
+
+	Critical path includes every single task that must be done in order to complete your project.
+	Critical path is based on Time alone and it usually tries to pick a schedule that has the least
+	amount of slack time. Your trying to identify what is constraining your time.
+
+	Critical Chain is based off of the theory of constraints. Critical Chain is focused on objects 
+	that require the most amount of work to complete. To put it another way it is focused on building
+	a schedule that provides a realistic amount of time to complete everything.
+
+	Critical Chain has more factors at play than critical chain. We need to challenge the dependencies
+	of tasks put on the caha
+
+		a. Look for Resource allocation
+		b. skill/Quality/Learning Curve
+
+	This is a sytem where you promise less but deliver more.
+
+/*****************************************************************************************************************/
+
+ - PERT Analysis
+
+ Stands for Program Evaluation Review Technic
+
+	A lot of this depends on the probabilities associated with completing certain things you've
+	planned for.
+
+	If someone asks an employee how long something will take and they respond 5 minutes
+	it provides you with a single point estimate. If you were to ask 2 other employees how much
+	time it will take to complete something and they respond with 3 minutes and 20 minutes
+	it will skew your time estimation process.
+
+	An example of this:
+	
+	|
+	|	   _
+	|	 /    \
+	|	/      \
+	|           ../          \
+	|         ../              \
+	|     .../                    \
+	|..../                           \
+	|--------------------------------------------------------
+	This is a normal probability which is where you point estimates for time should line
+	up with
+
+	If you get an estimate of 20 minutes it will skew your normal data.
+
+	You have to use statistics to make an approximation of your time needed to complete your 
+	project. 
+
+	PERT Analysis is dependent on the critical path associated with your project.
+
+/*********************************************************************************************************************/
+
+ -Disciplined Agile Enterprise
+
+	Follows more of the shuhari approach
+	This method of certification actually might make a difference to somone who wants to
+	learn how to actually manage a project. Other certifications focus on terminology and
+	memorization of maps. Dis
+
+	IBM has realesed a book about Disciplined Agile Enterprise

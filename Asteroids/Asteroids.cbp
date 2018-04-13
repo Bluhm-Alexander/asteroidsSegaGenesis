@@ -24,6 +24,8 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="res/gfx.h" />
+		<Unit filename="res/gfx.res" />
 		<Unit filename="res/sprite.h" />
 		<Unit filename="res/sprite.res" />
 		<Unit filename="res/sprites/asteroids.png" />
