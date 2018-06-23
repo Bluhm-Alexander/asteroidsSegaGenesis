@@ -50,15 +50,15 @@ I have been using kanban method
 	You then take your sprint log and make a burn down list. Where you plot your feature and goals over a period 
 	of time.|
 
-										     Burn Down Chart
+									Burn Down Chart
 	|--------------------|		 |--------------|	  | \
 	|  Product Backlog   |		 | Sprint Log   |	  |  \
 	|		     |		 |	        |	T |   \_____________
 	| a. Feature 1       |---------->|a.	        |------>I |                 \
-	| b. Requirement     |		 |b.	        |	M |                  \______________________
-	| c. feature 2	     |		 |e.	        |	E | 		       		            \
-	| d. feature 3	     |		 |--------------| 	  |----|------------|------------------------|--
-	| e. feature 4	     |				               a	    b                        e
+	| b. Requirement     |		 |b.	        |	M |                  \_____________
+	| c. feature 2	     |		 |e.	        |	E | 		                   \
+	| d. feature 3	     |		 |--------------| 	  |----|------------|--------------|--
+	| e. feature 4	     |				               a	    b              e
 	|--------------------|				           Events or Features
 
 								Flip axis on chart.
@@ -81,19 +81,19 @@ I have been using kanban method
 	b. A good way to think about Monte Carlo simutlations is in consideration to how much money certain outcomes
 	will take.
 	   _____________
-	  /	              \
-	 /	               \
-	/     Revenue           \	    ____________
-	\	               /\	   /	            \		     _____________
-	 \	              /  \-------------->/ Competitors      \		    /		\
-	  \_____________/	            	  \______________/\	   / Profits		 \
-					                 \-------------->/_______________ \
+	  /	        \
+	 /	         \
+	/     Revenue     \	    ____________
+	\	          /\	   /	        \		___________
+	 \	         /  \---->/ Competitors  \	       /	   \
+	  \_____________/	  \______________/\	      / Profits	    \
+					           \-------->/_______________\
 								     /
 								    /
 	__________________	 ________________		   /
-	|		    |	 |		|		  /
-	| Workers	    	    |---------->| Supplies 	|________________/
-	|________________ _|	 |_______________|
+	|		 |	 |		|		  /
+	| Workers	 |------>| Supplies 	|________________/
+	|________________|	 |______________|
 	c. It's a series of if then than what should we do. Companies will try to simulate how employees will
 	work together and the cost of supplies for a project.
 							     
@@ -253,13 +253,13 @@ Homework: Go to agilescout.com and read up on what software is best for project 
 	An example of this:
 	
 	|
-	|	   _
-	|	 /    \
-	|	/      \
-	|           ../          \
-	|         ../              \
-	|     .../                    \
-	|..../                           \
+	|	   	  _
+	|		 / \
+	|	       /    \
+	|           ../      \
+	|         ../          \
+	|     .../               \
+	|..../                     \
 	|--------------------------------------------------------
 	This is a normal probability which is where you point estimates for time should line
 	up with

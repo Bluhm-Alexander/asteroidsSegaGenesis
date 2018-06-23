@@ -9,3 +9,4 @@ IMAGE bga_7 "gfx/7.png" -1
 IMAGE bga_8 "gfx/8.png" -1
 IMAGE bga_9 "gfx/9.png" -1
 IMAGE bga_gameover "gfx/gameover.png" -1
+IMAGE bga_title "gfx/AsteroidsTitle.png" -1

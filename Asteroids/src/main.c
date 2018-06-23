@@ -18,6 +18,7 @@ u8 cooperative = 0;
 s8 player1;
 s8 player2;
 s8 timer[2];
+
 //Value of what time the bullets should die
 u16 bulletLimit[14];
 //Controller status values
@@ -28,6 +29,7 @@ u8 counter;
 fix16 rotation[2];
 
 //Prototypes in order of which they are called.
+static void titleScreen();
 static void setupLevel(s16 level);
 u8 gameLoop();
 u8 gameOver();
@@ -161,6 +163,10 @@ int main() {
     // reloading the background planes.
     SYS_enableInts();
 
+    //I'm going to assign Tile User Index in the main function lets see if this
+    //breaks everything
+    ind = TILE_USERINDEX;
+
     //LevelSetup used to be here
 
     //Updating screens
@@ -176,7 +182,9 @@ int main() {
 
     while (1)
     {
-        //while (gameMenu() == 0) {}
+        //Need to call the TitleScreen
+        //titleScreen();
+
         //Call the first level for now
         setupLevel(0);
         while (gameOver() == 0) { gameLoop(); }
@@ -186,11 +194,51 @@ int main() {
 	return (0);
 }
 
+/*****************************************************************************
+*                           !---titleScreen---!
+*
+*
+* This function displays the title of the game and it also controls the
+* different options you can set. It can set Co-Operative mode as well as rate
+* of fire and lives count.
+*****************************************************************************/
+
+void titleScreen()
+{
+    SPR_update();
+    u8 displayed = 0;
+    u16 value = JOY_readJoypad(JOY_1);
+    //Nullified User INDEX because things might be breaking from multiple access points
+    ind = TILE_USERINDEX;
+    while (1)
+    {
+        if (displayed == 0)
+        {
+            SYS_disableInts();
+            //display image
+            VDP_drawImageEx(PLAN_A, &bga_title, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 10, 12, FALSE, TRUE);
+            //Tileset was indexing with bga_gameover causing a bug which has been fixed.
+            ind += bga_title.tileset->numTile;
+            SYS_enableInts();
+            displayed = 1;
+        }
+        //VDP_drawText(test, 15, 16);
+        value = JOY_readJoypad(JOY_1);
+        if (value & BUTTON_DOWN/*value & BUTTON_START*/)
+        {
+            break;
+        }
+    }
+    clearScreen();
+}
+
+
+
 /*************************************************************************
 *                           !---gameLoop---!
 *
-* This
-*
+* This is more or less a list of all the different functions needed to
+* make the game run.
 **************************************************************************/
 
 u8 gameLoop()
@@ -236,6 +284,7 @@ u8 gameOver()
     if (player1 == 0 && positions[46][0] == FIX16(400) && timer[0] != -12)
     {
         SYS_disableInts();
+        ind = TILE_USERINDEX;
         //display image
         VDP_drawImageEx(PLAN_A, &bga_gameover, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 16, 13, FALSE, TRUE);
         ind += bga_gameover.tileset->numTile;
@@ -243,6 +292,8 @@ u8 gameOver()
         //This is a signal to not run this code more than once
         //writing stuff to the screen over and over again is expensive
         timer[0] = -12;
+        //update score
+        displayScore();
         return 0;
     }
     //Get the value from the controller
@@ -273,7 +324,7 @@ u8 gameOver()
 * It will also assign a velocity for the asteroids to travel at which
 * will also be randomly generated.
 ************************************************************************/
-static void setupLevel(s16 level)
+static void setupLevel(s16 level) //this used to be a static function
 {
     u8 index;
     //Misc stands for miscellaneous I know its weird
@@ -646,7 +697,7 @@ u16 convertToTable(fix16 degrees)
     return table[index];
 }
 
-/*************************************************************************
+/****************************************************************************
 *                       !--- accelerateShip ---!
 * function type: static
 * Return Type: void
@@ -659,7 +710,7 @@ u16 convertToTable(fix16 degrees)
 * This function modifies the velocity of the ship which is at position 46.
 * I may need to switch all of these to FIX16 because of the additional
 * processing power I would need to do 32 bit fixes.
-*************************************************************************/
+****************************************************************************/
 
 static void accelarateShip(u8 shipIndex) {
 
@@ -698,7 +749,7 @@ static void accelarateShip(u8 shipIndex) {
     }
 }
 
-/*************************************************************************
+/******************************************************************************
 *                        !--- fireBullets ---!
 * function type: static
 * Return Type: void
@@ -713,7 +764,7 @@ static void accelarateShip(u8 shipIndex) {
 * Spawn a bullet at the ships position. There can be no more than 30 bullets
 * on screen at once. this function will wrap back to the beginning and
 * overwrite old bullets.
-*************************************************************************/
+****************************************************************************/
 
 static void fireBullets(u8 shipIndex)
 {
@@ -769,12 +820,12 @@ static void fireBullets(u8 shipIndex)
 
         bulletLimit[(indexBullets - 32)] = temp;
 
+        /*
         //debugging show index
         char rad[16];
         uint16ToStr(bulletLimit[indexBullets - 32], rad, 3);
         VDP_drawText(rad, 14, 17);
-
-
+        */
 
         //increment the index by 1
         indexBullets += 1;
@@ -834,9 +885,12 @@ static void shipAnimation(u8 shipIndex)
         SPR_setVFlip(sprites[shipIndex], TRUE);
     }
 
+    /*
+    //Debugging Show Index of Frame used
     char str2[16];
     uint16ToStr(frame, str2, 2);
     VDP_drawText(str2, 9, 12);
+    */
     if (positions[shipIndex][0] != FIX16(400))
     {
         SPR_setFrame(sprites[shipIndex], frame);
@@ -897,10 +951,12 @@ static void updatePositions(){
                 {
                     SPR_releaseSprite(sprites[i]);
                     positions[i][0] = FIX16(400);
-                    //debugging
+                    /*
+                    //debugging for showing the Index of deleted bullet
                     char look[16];
                     uint16ToStr((i - 32), look, 3);
                     VDP_drawText(look, 14, 18);
+                    */
                 }
             }
 
@@ -1002,7 +1058,9 @@ static void displayScore()
     //Draw the number to plane A only when score changes
 
     SYS_disableInts();
-    //Cover the first number 000,000,001
+    //Must use if statements for number displays
+
+    //000,000,001
     VDP_drawImageEx(PLAN_A, images[(Score % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 10, 0, FALSE, TRUE);
     ind += images[Score % 10]->tileset->numTile; // *(*(images[counter % 10]).tileset).numTile;
     //000,000,010
@@ -1012,17 +1070,29 @@ static void displayScore()
     VDP_drawImageEx(PLAN_A, images[((Score / 100) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 8, 0, FALSE, TRUE);
     ind += images[((Score / 100) % 10)]->tileset->numTile;
     //000,001,000
-    VDP_drawImageEx(PLAN_A, images[((Score / 1000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 7, 0, FALSE, TRUE);
-    ind += images[((Score / 1000) % 10)]->tileset->numTile;
+    if (Score >= 1000)
+    {
+        VDP_drawImageEx(PLAN_A, images[((Score / 1000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 7, 0, FALSE, TRUE);
+        ind += images[((Score / 1000) % 10)]->tileset->numTile;
+    }
     //000,010,000
-    VDP_drawImageEx(PLAN_A, images[((Score / 10000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 6, 0, FALSE, TRUE);
-    ind += images[((Score / 10000) % 10)]->tileset->numTile;
+    if (Score >= 10000)
+    {
+        VDP_drawImageEx(PLAN_A, images[((Score / 10000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 6, 0, FALSE, TRUE);
+        ind += images[((Score / 10000) % 10)]->tileset->numTile;
+    }
     //000,100,000
-    VDP_drawImageEx(PLAN_A, images[((Score / 100000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 5, 0, FALSE, TRUE);
-    ind += images[((Score / 100000) % 10)]->tileset->numTile;
+    if (Score >= 100000)
+    {
+        VDP_drawImageEx(PLAN_A, images[((Score / 100000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 5, 0, FALSE, TRUE);
+        ind += images[((Score / 100000) % 10)]->tileset->numTile;
+    }
     //001,000,000
-    VDP_drawImageEx(PLAN_A, images[((Score / 1000000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 4, 0, FALSE, TRUE);
-    ind += images[((Score / 1000000) % 10)]->tileset->numTile;
+    if (Score >= 1000000)
+    {
+        VDP_drawImageEx(PLAN_A, images[((Score / 1000000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 4, 0, FALSE, TRUE);
+        ind += images[((Score / 1000000) % 10)]->tileset->numTile;
+    }
     SYS_enableInts();
 }
 /*********************************************************************************
@@ -1086,9 +1156,9 @@ static void checkRespawnShip()
 *Variables:
 *   NONE
 *
-* This will check the levelOver flag at the end of each game loop. If all asteroids
-* are dead the setupLevel() function will be called. It will pass in the level and
-* it will set up the level accordingly.
+* This will check the numAsteroids flag at the end of each game loop. If all
+* asteroids are dead the setupLevel() function will be called. It will pass in the
+* level and it will set up the level accordingly.
 **********************************************************************************/
 static void checkLevelOver()
 {
@@ -1104,16 +1174,5 @@ static void checkLevelOver()
 static void clearScreen()
 {
     VDP_clearPlan(PLAN_A, FALSE);
-
-    /*u8 i;
-    for (i = 0; i < 64; i++)
-    {
-        if (sprites[i] != NULL)
-        {
-            SPR_releaseSprite(sprites[i]);
-            //sprites[i] = NULL;
-        }
-    }
-    SPR_update();*/
     SPR_reset();
 }
