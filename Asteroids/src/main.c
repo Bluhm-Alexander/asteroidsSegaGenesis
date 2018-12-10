@@ -38,6 +38,7 @@ static void handleInput();
 u16 convertToTable(fix16 degrees);
 static void accelarateShip(u8 shipIndex);
 static void shipAnimation(u8 shipIndex);
+static void explosion();
 static void updatePositions();
 static void fireBullets(u8 shipIndex);
 u8 checkCollision(u8 i, u8 j);
@@ -243,31 +244,34 @@ void titleScreen()
 
 u8 gameLoop()
 {
-		//read input
-		handleInput();
+    //Set tile index to the beginning see what it does
+    ind = TILE_USERINDEX;
 
-		//move sprite
-		updatePositions();
-		checkRespawnShip();
+    //read input
+    handleInput();
 
-		//check if asteroids are dead
-		checkLevelOver();
+    //move sprite
+    updatePositions();
+    checkRespawnShip();
 
-        //Update sprites again
-		SPR_update();
+    //check if asteroids are dead
+    checkLevelOver();
 
-		//wait for screen refresh
-		VDP_waitVSync();
+    //Update sprites again
+    SPR_update();
 
-		//Display Timer check crashes
-		//fix32ToStr(getTimeAsFix32(getTick()), str, 2);
-		//VDP_drawText(str, 10, 13);
+    //wait for screen refresh
+    VDP_waitVSync();
 
-		//The counter controls bullet rapid fire and bullet
-		//living time
-        addCounter();
+    //Display Timer check crashes
+    //fix32ToStr(getTimeAsFix32(getTick()), str, 2);
+    //VDP_drawText(str, 10, 13);
 
-        return 0;
+    //The counter controls bullet rapid fire and bullet
+    //living time
+    addCounter();
+
+    return 0;
 }
 
 /************************************************************************************
@@ -281,10 +285,14 @@ u8 gameLoop()
 ************************************************************************************/
 u8 gameOver()
 {
+    //This is now being done in the main game loop. As far as I know this is being set
+    //to the beginning plus 16 tiles over from the system beginning
+    //ind = TILE_USERINDEX;
+
     if (player1 == 0 && positions[46][0] == FIX16(400) && timer[0] != -12)
     {
+        displayScore();
         SYS_disableInts();
-        ind = TILE_USERINDEX;
         //display image
         VDP_drawImageEx(PLAN_A, &bga_gameover, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 16, 13, FALSE, TRUE);
         ind += bga_gameover.tileset->numTile;
@@ -293,7 +301,7 @@ u8 gameOver()
         //writing stuff to the screen over and over again is expensive
         timer[0] = -12;
         //update score
-        displayScore();
+        //displayScore();
         return 0;
     }
     //Get the value from the controller
@@ -644,42 +652,8 @@ static void handleInput()
 
 u16 convertToTable(fix16 degrees)
 {
-    //I did have this set up to calculate the table position on its own
-    //but for some reason 32 bit math keeps returning the wrong answers
-    //after 270°
-
-    //I have made a spread sheet with the appropriate values to compensate
-    //and have incorporated them into the table array. If anyone else should
-    //read this and see where my flaw is please contact me.
-
-    /*u32 step1 = fix16ToInt(degrees) * 1000000;
-    u32 step2 = step1 / 351562;
-
-    u16 conversion = step2;
-
-    //Display the conversion variable
-    char rad[16];
-    fix16ToStr(rotation, rad, 4);
-    VDP_drawText(rad, 13, 16);
-
-    return conversion;*/
-
     //Turn the degrees into an index
     u16 index = fix16ToInt(degrees) / 6;
-
-    //This is for 9 degree transforms
-    /*
-    u16 table[41] = {
-        0,   26,   51,  77, 102,
-        128, 154, 179, 205, 230,
-        256, 282, 307, 333, 358,
-        384, 410, 435, 461, 486,
-        512, 538, 563, 589, 614,
-        640, 666, 691, 717, 742,
-        768, 794, 819, 845, 870,
-        896, 922, 947, 973, 998,
-        1024
-    };*/
 
     u16 table[61] = {
         0,    17,  34,  51,  68,  85,
@@ -714,9 +688,12 @@ u16 convertToTable(fix16 degrees)
 
 static void accelarateShip(u8 shipIndex) {
 
+    //Calculate Total Velocity
+    fix16 vx = velocity[shipIndex][0];
+    fix16 vy = velocity[shipIndex][1];
     u16 test = convertToTable(rotation[(shipIndex - 46)]);
 
-    //This must be fixed here to the proper functions
+    //This isn't accelerating properly trying again
     velocity[shipIndex][0] = fix16Add((cosFix16(test) / 9), velocity[shipIndex][0]);
     velocity[shipIndex][1] = fix16Add(-(sinFix16(test) / 9), velocity[shipIndex][1]);
 
@@ -725,27 +702,14 @@ static void accelarateShip(u8 shipIndex) {
     uint16ToStr(test, rad, 4);
     VDP_drawText(rad, 12, 16);*/
 
-    //get rid of this later
-    //velocity[shipIndex][0] = fix16Add(FIX16(0.1), velocity[shipIndex][0]);
-
     //make sure that the ship is not going too fast
-    //X axis acceleration
-    if (velocity[shipIndex][0] > FIX16(3))
+    //We are going to use Pythagora's theorem to calculate total velocity... roughly
+    //I'm not going to find square root of the total velocity because it will put too
+    //much stress on the genesis and slow the game down.
+    if (FIX16(10) < fix16Add(fix16Mul(velocity[shipIndex][0],velocity[shipIndex][0]), fix16Mul(velocity[shipIndex][1],velocity[shipIndex][1])))
     {
-        velocity[shipIndex][0] = FIX16(3);
-    }
-    if (velocity[shipIndex][0] < FIX16(-3))
-    {
-        velocity[shipIndex][0] = FIX16(-3);
-    }
-    //Y axis acceleration
-    if (velocity[shipIndex][1] > FIX16(3))
-    {
-        velocity[shipIndex][1] = FIX16(3);
-    }
-    if (velocity[shipIndex][1] < FIX16(-3))
-    {
-        velocity[shipIndex][1] = FIX16(-3);
+        velocity[shipIndex][0] = vx;
+        velocity[shipIndex][1] = vy;
     }
 }
 
@@ -896,6 +860,21 @@ static void shipAnimation(u8 shipIndex)
         SPR_setFrame(sprites[shipIndex], frame);
     }
 }
+ /**********************************************************************
+ *                  !---explosion---!
+ * \brief the explosion animation should only be 16 frames and it will
+ * play for everything. Ship explosions asteroids everything just like
+ * the original arcade game.
+ * \param none
+ * \return void
+ *
+ *********************************************************************/
+
+ static void explosion()
+ {
+    u16 frame = 0;
+
+ }
 
 /***************************************************************
 *                   !---update Physics---!
@@ -968,6 +947,7 @@ static void updatePositions(){
             //the loop takes to complete.
             if (i < 32)
             {
+                //j is bullets
                 for(j = 32; j < 47; j++)
                 {
                     if(positions[j][0] != FIX16(400))
@@ -990,6 +970,8 @@ static void updatePositions(){
                             SPR_releaseSprite(sprites[i]);
                             SPR_releaseSprite(sprites[j]);
                             createAsteroids(i);
+                            //play asteroid destruction animation
+                            explosion();
                             positions[i][0] = FIX16(400);
                             positions[j][0] = FIX16(400);
                             numAsteroids--;
@@ -1053,17 +1035,23 @@ u8 checkCollision(u8 i, u8 j)
 ********************************************************************************/
 static void displayScore()
 {
-    // load background
-    ind = TILE_USERINDEX;
+    // load background changing TILE_USERINDEX to TILE_SYSTEMINDEX
+    //ind = TILE_USERINDEX; moving this to beginning of cycle going to see what it does.
+
     //Draw the number to plane A only when score changes
 
     SYS_disableInts();
     //Must use if statements for number displays
 
+    //debugging for showing the Score of deleted bullet
+                    char look[16];
+                    uintToStr(Score, look, 3);
+                    VDP_drawText(look, 0, 6);
+
     //000,000,001
     VDP_drawImageEx(PLAN_A, images[(Score % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 10, 0, FALSE, TRUE);
     ind += images[Score % 10]->tileset->numTile; // *(*(images[counter % 10]).tileset).numTile;
-    //000,000,010
+    //000,000,010 Trying something really stupid
     VDP_drawImageEx(PLAN_A, images[((Score / 10) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 9, 0, FALSE, TRUE);
     ind += images[((Score / 10) % 10)]->tileset->numTile;
     //000,000,100
