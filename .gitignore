@@ -4,3 +4,5 @@ design\ methods.txt
 Kanban\ Board\ Working.png
 Kanban\ Board.xcf
 Asteroids/Asteroids-DESKTOP-UAS9MF4.layout
+*.o
+*.layout

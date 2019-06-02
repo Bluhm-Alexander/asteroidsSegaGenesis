@@ -47,6 +47,19 @@ static void checkRespawnShip();
 static void clearScreen();
 static void checkLevelOver();
 
+const Image *images[10] = {
+    &bga_0,
+    &bga_1,
+    &bga_2,
+    &bga_3,
+    &bga_4,
+    &bga_5,
+    &bga_6,
+    &bga_7,
+    &bga_8,
+    &bga_9
+};
+
 
 /**************************************************************
 *              !-- Create Asteroid --!
@@ -154,7 +167,7 @@ int main() {
     VDP_setScreenWidth320();
 
      // init sprites engine
-    SPR_init(200, 384, 256);
+    SPR_init();
 
     // set all palette to black
     VDP_setPaletteColors(0, (u16*) palette_black, 64);
@@ -473,7 +486,7 @@ static void addCounter()
 
     //debugging
     char counterDisplay[16];
-    uint16ToStr(counter, counterDisplay, 4);
+    uintToStr(counter, counterDisplay, 4);
     VDP_drawText(counterDisplay, 15, 16);
 }
 
