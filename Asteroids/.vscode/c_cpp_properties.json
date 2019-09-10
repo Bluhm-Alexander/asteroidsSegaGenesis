@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "C:\\SGDK\\inc",
+                "C:\\SGDK\\res",
+                "C:\\Users\\super\\Documents\\Genesis Development\\Asteroids\\asteroidsSegaGenesis\\Asteroids\\res"
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "C:\\SGDK\\bin\\gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

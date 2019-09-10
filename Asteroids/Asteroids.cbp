@@ -35,7 +35,11 @@
 		<Extensions>
 			<code_completion />
 			<envvars />
-			<debugger />
+			<debugger>
+                <remote_debugging target="Debug">
+                    <options conn_type="0" serial_baud="115200" ip_address="localhost" ip_port="1234" additional_cmds_before='shell &quot;start C:\blastem-win32-0.6.2\blastem.exe C:\Users\super\Documents\GenesisDevelopment\Asteroids\asteroidsSegaGenesis\Asteroids\out\rom.bin -D&quot;' />
+                </remote_debugging>
+            </debugger>
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

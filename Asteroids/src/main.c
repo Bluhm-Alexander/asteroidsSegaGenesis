@@ -8,14 +8,64 @@
 * FILE: main.c
 * Author: Alexander Bluhm
 * Game Title: MegaStroids
-* Code Version: 2.0
+* Code Version: 2.0.0
 *
 * This is a Major rewrite of this Project. The introduction of structs has
 * triggered a major rewrite of the code all in the name of efficiency and
 * maintainability. I want to add more features to this game and it requires
-* that the code be more dynamic.
+* that the code be more dynamic. Also focusing on removing the parameters
+* from as many functions as possible making code lean without sacrificing
+* performance.
 ****************************************************************************/
+//refactoring the code to be a bit more organized
+typedef struct {
+    Sprite* sprite;
+    fix16 x;
+    fix16 y;
+    fix16 velX;
+    fix16 velY;
+    u8 hitBox;
+    u8 isAlive;
+    u16 angle;
+}Entity;
+
+typedef struct {
+    Entity coord;
+    u8 bulletLimit;
+}Bullet;
+
+typedef struct {
+    Entity coord;
+    u16 bulletLimit;
+    u16 lives;
+    s8 timer;
+    u8 bulletIndex;
+    //this will hold degrees instead of an integer index for the
+    //sake of making the ship rotate at a slower pace. I may remove
+    //this in a later update if I can it's too janky.
+    fix16 rotation;
+}Ship;
+
 u16 ind; //Tile Index for loading information to VDP
+
+// GNU GCC compiler passes parameters as 32 bit values which saturates the
+// 16-bit bus and therefore slows down the game code. This isn't a problem
+// for passing two 16 bit values in a function call as the compiler lumps it
+// together but if you want to pass an 8 bit index it is really inefficient.
+// Therefore I am adding a master index for all objects in the game. I am also
+// adding a 8 bit generic parameter for 8 bit integers.
+u8 byteParam1;
+u8 byteParam2;
+
+//these parameters take up two words in memory
+u16 wordParam;
+
+//Making a enumerator for readability as to what object type is being manipulated
+enum objectType {
+    rockType,
+    bulletType,
+    shipType
+};
 
 u32 Score;
 u8 numAsteroids;
@@ -39,48 +89,6 @@ u8 playerAmmunition;
 s8 pressed;
 u8 counter;
 
-//refactoring the code to be a bit more organized
-typedef struct {
-    Sprite* sprite;
-    fix16 x;
-    fix16 y;
-    fix16 velX;
-    fix16 velY;
-    u8 hitBox;
-    u8 isAlive;
-    u16 angle;
-}Entity;
-
-typedef struct {
-    Sprite* sprite;
-    fix16 x;
-    fix16 y;
-    fix16 velX;
-    fix16 velY;
-    u8 hitBox;
-    u8 isAlive;
-    u16 angle;
-    u16 bulletLimit;
-}Bullet;
-
-typedef struct {
-    Sprite* sprite;
-    fix16 x;
-    fix16 y;
-    fix16 velX;
-    fix16 velY;
-    u8 hitBox;
-    u8 isAlive;
-    u16 angle;
-    u16 bulletLimit;
-    u16 lives;
-    s8 timer;
-    //this will hold degrees instead of an integer index for the
-    //sake of making the ship rotate at a slower pace. I may remove
-    //this in a later update if I can it's too janky.
-    fix16 rotation;
-}Ship;
-
 //Prototypes in order of which they are called.
 static void titleScreen();
 static void setupLevel(s16 level);
@@ -94,7 +102,7 @@ static void shipAnimation(u8 shipIndex);
 static void explosion();
 static void updatePositions();
 static void fireBullets(u8 shipIndex);
-u8 checkCollision(u8 i, u8 j);
+u8 checkCollision(u8 index1, u8 objectType1, u8 index2, u8 objectType2);
 static void displayScore();
 static void checkRespawnShip();
 static void clearScreen();
@@ -146,7 +154,7 @@ void createAsteroids(u8 hitAsteroid)
             {
                 rocks[index].angle = (rocks[hitAsteroid].angle + angleDeflection) + 1024;
             }
-            if (angles[hitAsteroid] + angleDeflection > 1024)
+            if (rocks[hitAsteroid].angle + angleDeflection > 1024)
             {
                 rocks[index].angle = (rocks[hitAsteroid].angle + angleDeflection) - 1024;
             }
@@ -332,7 +340,7 @@ u8 gameOver()
     //to the beginning plus 16 tiles over from the system beginning
     //ind = TILE_USERINDEX;
 
-    if (ships[0].lives == 0 && ships[0].isAlive == 0 && ships[0].timer != -12)
+    if (ships[0].lives == 0 && ships[0].coord.isAlive == 0 && ships[0].timer != -12)
     {
         displayScore();
         SYS_disableInts();
@@ -349,7 +357,7 @@ u8 gameOver()
     }
     //Get the value from the controller
     u16 value = JOY_readJoypad(JOY_1);
-    if (value & BUTTON_START && ships[0].lives == 0 && ships[0].isAlive == 0)
+    if (value & BUTTON_START && ships[0].lives == 0 && ships[0].coord.isAlive == 0)
     {
         return 1;
     }
@@ -378,7 +386,6 @@ u8 gameOver()
 static void setupLevel(s16 level) //I might remove this parameter later because it bugs me
 {
     u8 index;
-    totalRocks;
     //Misc stands for miscellaneous I know its weird
     u16 miscx;
     u16 miscy;
@@ -400,16 +407,16 @@ static void setupLevel(s16 level) //I might remove this parameter later because 
 
     switch(level) {
     case 0 :
-        totalRocks = 4;
+        numAsteroids = 4;
         break;
     case 1 :
-        totalRocks = 6;
+        numAsteroids = 6;
         break;
     case 2 :
-        totalRocks = 8;
+        numAsteroids = 8;
         break;
     default :
-        totalRocks = 8;
+        numAsteroids = 8;
         break;
     }
 
@@ -424,11 +431,11 @@ static void setupLevel(s16 level) //I might remove this parameter later because 
         }
 
         //Initialize all bullets to dead
-        for (index = 0; index < 32 index++)
+        for (index = 0; index < 32; index++)
         {
-            bullets[index].isAlive = 0;
-            bullets[index].hitBox = 0;
-            bullets[index].angle = 0
+            bullets[index].coord.isAlive = 0;
+            bullets[index].coord.hitBox = 0;
+            bullets[index].coord.angle = 0;
         }
 
         //Set default coordinates and set up game
@@ -441,21 +448,23 @@ static void setupLevel(s16 level) //I might remove this parameter later because 
         if (cooperative == 0)
         {
             //Player 1
-            ships[0].angle = 0;
-            ships[0].x = FIX16(160);
-            ships[0].y = FIX16(112);
-            ships[0].velX = FIX16(0);
-            ships[0].velY = FIX16(0);
-            ships[0].sprite = SPR_addSprite(&ship_sprite, fix16ToInt(ships[0].x), fix16ToInt(ships[0].y), TILE_ATTR(PAL0, TRUE, FALSE, FALSE));
+            ships[0].coord.angle = 0;
+            ships[0].coord.x = FIX16(160);
+            ships[0].coord.y = FIX16(112);
+            ships[0].coord.velX = FIX16(0);
+            ships[0].coord.velY = FIX16(0);
+            ships[0].coord.sprite = SPR_addSprite(&ship_sprite, fix16ToInt(ships[0].coord.x), fix16ToInt(ships[0].coord.y), TILE_ATTR(PAL0, TRUE, FALSE, FALSE));
             //Default ship resting
             shipAnimation(0);
-            hitBox[46] = 8;
-            player1 = 3;
+            ships[0].coord.hitBox = 8;
+            ships[0].coord.isAlive = 1;
+            ships[0].lives = 3;
+            ships[0].bulletIndex = 0;
             Score = 0;
-            displayScore();
-            timer[0] = -1;
+            ships[0].timer = -1;
         }
     }
+    displayScore();
 
     //One For Loop to set up all rocks
     //In this case we are setting up 4 rocks
@@ -485,6 +494,9 @@ static void setupLevel(s16 level) //I might remove this parameter later because 
         //Setting the HitBox of the Big asteroids
         rocks[index].hitBox = 16;
 
+        //Set the rocks to living
+        rocks[index].isAlive = 1;
+
         //Random angle must be made
         rocks[index].angle = random() % 10000;
         while (rocks[index].angle > 1024)
@@ -500,7 +512,7 @@ static void setupLevel(s16 level) //I might remove this parameter later because 
         rocks[index].sprite = SPR_addSprite(&big1, fix16ToInt(rocks[index].x), fix16ToInt(rocks[index].y), TILE_ATTR(PAL0, TRUE, FALSE, FALSE));
         numAsteroids++;
         index++;
-    } while(index < totalRocks); //This needs to be replaced with level incrementer
+    } while(index < 4); //This needs to be replaced with level incrementer
 }
 
 /************************************************************************
@@ -564,7 +576,7 @@ static void handleInput()
     //Up button does nothing for now will control thrust
     if (value & BUTTON_UP)
     {
-        accelarateShip(46);
+        accelarateShip(0);
     }
 
     if (value & BUTTON_DOWN)
@@ -575,11 +587,11 @@ static void handleInput()
     //Increment angle by 3 and then integer math
     if (value & BUTTON_LEFT)
     {
-        rotation[0] = fix16Add(rotation[0], FIX16(6));
+        ships[0].rotation = fix16Add(ships[0].rotation, FIX16(6));
         //Make sure the rotation is not less than 0
-        if (rotation[0] >= FIX16(360))
+        if (ships[0].rotation >= FIX16(360))
         {
-            rotation[0] = FIX16(0);
+            ships[0].rotation = FIX16(0);
         }
         //Now update the ship animation.
         shipAnimation(46);
@@ -587,11 +599,11 @@ static void handleInput()
 
     else if (value & BUTTON_RIGHT)
     {
-        rotation[0] = fix16Add(rotation[0], FIX16(-6));
+        ships[0].rotation = fix16Add(ships[0].rotation, FIX16(-6));
         //Make sure degrees does not exceed 360
-        if (rotation[0] < FIX16(0))
+        if (ships[0].rotation < FIX16(0))
         {
-            rotation[0] = FIX16(354);
+            ships[0].rotation = FIX16(354);
         }
         //Now we update the animation
         shipAnimation(46);
@@ -633,11 +645,11 @@ static void handleInput()
         //Increment angle by 3 and then integer math
         if (value2 & BUTTON_LEFT)
         {
-            rotation[1] = fix16Add(rotation[1], FIX16(6));
+            ships[1].rotation = fix16Add(ships[1].rotation, FIX16(6));
             //Make sure the rotation is not less than 0
-            if (rotation[1] >= FIX16(360))
+            if (ships[1].rotation >= FIX16(360))
             {
-                rotation[1] = FIX16(0);
+                ships[1].rotation = FIX16(0);
             }
             //Now update the ship animation.
             shipAnimation(47);
@@ -645,11 +657,11 @@ static void handleInput()
 
         else if (value2 & BUTTON_RIGHT)
         {
-            rotation[1] = fix16Add(rotation[1], FIX16(-6));
+            ships[1].rotation = fix16Add(ships[1].rotation, FIX16(-6));
             //Make sure degrees does not exceed 360
-            if (rotation[1] < FIX16(0))
+            if (ships[1].rotation < FIX16(0))
             {
-                rotation[1] = FIX16(354);
+                ships[1].rotation = FIX16(354);
             }
             //Now we update the animation
             shipAnimation(47);
@@ -695,7 +707,7 @@ static void handleInput()
 * Convert degrees to 1024 based radian look up table. The way Sin and
 * cosine work is that they must be passed a integer ranging from 0 to
 * 1024. Those numbers correspond to radians I however converted degrees
-* to the table for instance 90° = 256 and 360° = 1024.
+* to the table for instance 90ï¿½ = 256 and 360ï¿½ = 1024.
 *
 * OLD NOTES:
 * I've found that there is some inaccuracies when computing larger 32 bit
@@ -703,7 +715,7 @@ static void handleInput()
 * for now.
 *
 * If this method proves to be too taxing for the CPU I will replace
-* this method with an array with the values needed for incrementing 9°
+* this method with an array with the values needed for incrementing 9ï¿½
 * every cycle.
 ************************************************************************/
 
@@ -746,13 +758,13 @@ u16 convertToTable(fix16 degrees)
 static void accelarateShip(u8 shipIndex) {
 
     //Calculate Total Velocity
-    fix16 vx = velocity[shipIndex][0];
-    fix16 vy = velocity[shipIndex][1];
-    u16 test = convertToTable(rotation[(shipIndex - 46)]);
+    fix16 vx = ships[shipIndex].coord.velX;
+    fix16 vy = ships[shipIndex].coord.velY;
+    u16 test = convertToTable(ships[shipIndex].rotation);
 
     //This isn't accelerating properly trying again
-    velocity[shipIndex][0] = fix16Add((cosFix16(test) / 9), velocity[shipIndex][0]);
-    velocity[shipIndex][1] = fix16Add(-(sinFix16(test) / 9), velocity[shipIndex][1]);
+    ships[shipIndex].coord.velX = fix16Add((cosFix16(test) / 9), ships[shipIndex].coord.velX);
+    ships[shipIndex].coord.velY = fix16Add(-(sinFix16(test) / 9), ships[shipIndex].coord.velY);
 
     //Debugging
     /*char rad[16];
@@ -763,10 +775,10 @@ static void accelarateShip(u8 shipIndex) {
     //We are going to use Pythagora's theorem to calculate total velocity... roughly
     //I'm not going to find square root of the total velocity because it will put too
     //much stress on the genesis and slow the game down.
-    if (FIX16(10) < fix16Add(fix16Mul(velocity[shipIndex][0],velocity[shipIndex][0]), fix16Mul(velocity[shipIndex][1],velocity[shipIndex][1])))
+    if (FIX16(10) < fix16Add(fix16Mul(ships[shipIndex].coord.velX,ships[shipIndex].coord.velX), fix16Mul(ships[shipIndex].coord.velY,ships[shipIndex].coord.velY)))
     {
-        velocity[shipIndex][0] = vx;
-        velocity[shipIndex][1] = vy;
+        ships[shipIndex].coord.velX = vx;
+        ships[shipIndex].coord.velY = vy;
     }
 }
 
@@ -789,41 +801,47 @@ static void accelarateShip(u8 shipIndex) {
 
 static void fireBullets(u8 shipIndex)
 {
-    //If the ship is dead don't fire the bullets
-    if (positions[shipIndex][0] != FIX16(400))
+    //Only fire bullets if the ship is alive
+    if (ships[shipIndex].coord.isAlive == 1)
     {
-        //Create the bullet at the proper position
-        if (positions[indexBullets][0] == FIX16(400))  //!sprites[indexBullets]
+        // If the ship fires a bullet and there is an open slot in the index queue
+        // create a bullet at the ships position and make a sprite to represent the bullet
+        if (bullets[ships[shipIndex].bulletIndex].coord.isAlive == 0)
         {
             //Get the position of the ship spawn bullet at position
-            positions[indexBullets][0] = fix16Add(positions[shipIndex][0], FIX16(8));
-            positions[indexBullets][1] = fix16Add(positions[shipIndex][1], FIX16(8));
+            bullets[ships[shipIndex].bulletIndex].coord.x = fix16Add(ships[shipIndex].coord.x, FIX16(8));
+            bullets[ships[shipIndex].bulletIndex].coord.y = fix16Add(ships[shipIndex].coord.y, FIX16(8));
 
             //Make the sprite
-            sprites[indexBullets] = SPR_addSprite(&bullet, fix16ToInt(positions[indexBullets][0]),
-                                              fix16ToInt(positions[indexBullets][1]), TILE_ATTR(PAL0, TRUE, FALSE, FALSE));
+            bullets[ships[shipIndex].bulletIndex].coord.sprite =
+                SPR_addSprite(&bullet, fix16ToInt(bullets[ships[shipIndex].bulletIndex].coord.x),
+                                              fix16ToInt(bullets[ships[shipIndex].bulletIndex].coord.y),
+                                               TILE_ATTR(PAL0, TRUE, FALSE, FALSE));
         }
+        // else if the bullet queue is full take an existing bullet and its sprite
+        // and set it to the firing position of the ship
         else
         {
             //Get the position of the ship spawn bullet at position
-            positions[indexBullets][0] = fix16Add(positions[shipIndex][0], FIX16(8));
-            positions[indexBullets][1] = fix16Add(positions[shipIndex][1], FIX16(0));
+            bullets[ships[shipIndex].bulletIndex].coord.x = fix16Add(ships[shipIndex].coord.x, FIX16(8));
+            bullets[ships[shipIndex].bulletIndex].coord.y = fix16Add(ships[shipIndex].coord.y, FIX16(8));
         }
 
         //Set the velocity based on rotation
-        //Need to create a bullet at a vacant position.
-        u16 test = convertToTable(rotation[shipIndex - 46]);
-        velocity[indexBullets][0] = fix16Add((cosFix16(test) * FIX16(0.08)), velocity[shipIndex][0]);
-        velocity[indexBullets][1] = fix16Add(-(sinFix16(test) * FIX16(0.08)), velocity[shipIndex][1]);
+        u16 test = convertToTable(ships[shipIndex].rotation);
+        bullets[ships[shipIndex].bulletIndex].coord.velX = fix16Add((cosFix16(test) * FIX16(0.08)), ships[shipIndex].coord.velX);
+        bullets[ships[shipIndex].bulletIndex].coord.velY = fix16Add(-(sinFix16(test) * FIX16(0.08)), ships[shipIndex].coord.velY);
 
-        //Make sure the bullets don't go too fast
-        if (velocity[indexBullets][0] > FIX16(6))
+        //Make sure the bullets don't go too fast.
+        // Now that I think about it I'm not too sure if this
+        // is necessary.
+        if (bullets[ships[shipIndex].bulletIndex].coord.velX > FIX16(6))
         {
-            velocity[indexBullets][0] = FIX16(6);
+            bullets[ships[shipIndex].bulletIndex].coord.velX = FIX16(6);
         }
-        if (velocity[indexBullets][1] > FIX16(6))
+        if (bullets[ships[shipIndex].bulletIndex].coord.velY)
         {
-            velocity[indexBullets][1] = FIX16(6);
+            bullets[ships[shipIndex].bulletIndex].coord.velY = FIX16(6);
         }
 
         //Bullet Limits control the distance at which the bullets can go
@@ -839,7 +857,7 @@ static void fireBullets(u8 shipIndex)
             temp = (counter - 1);
         }
 
-        bulletLimit[(indexBullets - 32)] = temp;
+        bullets[ships[shipIndex].bulletIndex].bulletLimit = temp;
 
         /*
         //debugging show index
@@ -849,12 +867,12 @@ static void fireBullets(u8 shipIndex)
         */
 
         //increment the index by 1
-        indexBullets += 1;
+        ships[shipIndex].bulletIndex += 1;
 
         //Wrap the bullets only 14 bullets on screen
-        if (indexBullets > 45)
+        if (ships[shipIndex].bulletIndex > playerAmmunition)
         {
-            indexBullets = 32;
+            ships[shipIndex].bulletIndex = 0;
         }
     }
 }
@@ -881,29 +899,29 @@ static void shipAnimation(u8 shipIndex)
     u16 frame = fix16ToInt(ships[shipIndex].rotation) / 6;
 
     //Ship facing east
-    if (ships[shipIndex].rotation >= FIX16(0) && ships[shipIndex].rotation <= FIX16(90) && ships.isAlive == 1)
+    if (ships[shipIndex].rotation >= FIX16(0) && ships[shipIndex].rotation <= FIX16(90) && ships[shipIndex].coord.isAlive == 1)
     {
         frame = 15 - frame;
-        SPR_setHFlip(ships[shipIndex].sprite, FALSE);
-        SPR_setVFlip(ships[shipIndex].sprite, FALSE);
+        SPR_setHFlip(ships[shipIndex].coord.sprite, FALSE);
+        SPR_setVFlip(ships[shipIndex].coord.sprite, FALSE);
     }
-    else if (ships[shipIndex].rotation > FIX16(90) && ships[shipIndex].rotation <= FIX16(180) && ships.isAlive == 1)
+    else if (ships[shipIndex].rotation > FIX16(90) && ships[shipIndex].rotation <= FIX16(180) && ships[shipIndex].coord.isAlive == 1)
     {
         frame = frame - 15;
-        SPR_setHFlip(ships[shipIndex].sprite, TRUE);
-        SPR_setVFlip(ships[shipIndex].sprite, FALSE);
+        SPR_setHFlip(ships[shipIndex].coord.sprite, TRUE);
+        SPR_setVFlip(ships[shipIndex].coord.sprite, FALSE);
     }
-    else if (ships[shipIndex].rotation > FIX16(180) && ships[shipIndex].rotation <= FIX16(270) && ships.isAlive == 1)
+    else if (ships[shipIndex].rotation > FIX16(180) && ships[shipIndex].rotation <= FIX16(270) && ships[shipIndex].coord.isAlive == 1)
     {
         frame = 15 - (frame - 30);
-        SPR_setHFlip(ships[shipIndex].sprite, TRUE);
-        SPR_setVFlip(ships[shipIndex].sprite, TRUE);
+        SPR_setHFlip(ships[shipIndex].coord.sprite, TRUE);
+        SPR_setVFlip(ships[shipIndex].coord.sprite, TRUE);
     }
-    else if (ships[shipIndex].rotation > FIX16(270) && ships[shipIndex].rotation < FIX16(360) && ships.isAlive == 1)
+    else if (ships[shipIndex].rotation > FIX16(270) && ships[shipIndex].rotation < FIX16(360) && ships[shipIndex].coord.isAlive == 1)
     {
         frame = (frame - 45);
-        SPR_setHFlip(ships[shipIndex].sprite, FALSE);
-        SPR_setVFlip(ships[shipIndex].sprite, TRUE);
+        SPR_setHFlip(ships[shipIndex].coord.sprite, FALSE);
+        SPR_setVFlip(ships[shipIndex].coord.sprite, TRUE);
     }
 
     /*
@@ -912,9 +930,9 @@ static void shipAnimation(u8 shipIndex)
     uint16ToStr(frame, str2, 2);
     VDP_drawText(str2, 9, 12);
     */
-    if (ships.isAlive == 1)
+    if (ships[shipIndex].coord.isAlive == 1)
     {
-        SPR_setFrame(ships[shipIndex].sprite, frame);
+        SPR_setFrame(ships[shipIndex].coord.sprite, frame);
     }
 }
  /**********************************************************************
@@ -933,107 +951,120 @@ static void shipAnimation(u8 shipIndex)
 
  }
 
-/***************************************************************
+ /**************************************************************
+ *                  !---Scree Wrap Elements---!
+ * This function will wrap any entity on screen.
+ *
+ **************************************************************/
+
+static void screenWrapElements() {
+    fix16 * valX;
+    fix16 * valY;
+    u8 * living;
+
+    // set the value of the x, y coordinates
+    switch(byteParam1) {
+    case rockType:
+        valX = &rocks[byteParam2].x;
+        valY = &rocks[byteParam2].y;
+        living = &rocks[byteParam2].isAlive;
+        break;
+    case bulletType:
+        valX = &bullets[byteParam2].coord.x;
+        valY = &bullets[byteParam2].coord.y;
+        living = &bullets[byteParam2].coord.isAlive;
+        break;
+    case shipType:
+        valX = &ships[byteParam2].coord.x;
+        valY = &ships[byteParam2].coord.y;
+        living = &ships[byteParam2].coord.isAlive;
+        break;
+    }
+
+    if(*living == 1)
+    {
+        //Screen rapping X+
+        if (*valX > FIX16(302))
+        {
+            *valX = FIX16(-15);
+        }
+        //Screen Rapping X-
+        if(*valX < FIX16(-15))
+        {
+            *valX = FIX16(302);
+        }
+        //Screen Rap Y+
+        if (*valY > FIX16(206))
+        {
+            *valY = FIX16(-15);
+        }
+        //Screen Rap Y-
+        if (*valY < FIX16(-15))
+        {
+            *valY = FIX16(206);
+        }
+    }
+}
+
+/********************************************************************************
 *                   !---update Physics---!
-*
-* Update Physics functions variables can be found in the main
-* function. Just a quick note, if I need to do memory allocation
-* use the MEM_alloc(sizeof()) command. To free use MEM_free().
-* this will be a void it will just scroll a couple sprites for now.
-*
-* This function is going to have the responsibility of updating
-* the positions of everything. After is has updated position it checks to see
-* if there are any collisions. If so it will delete the sprite
-* and set the X to 400 indicating it is dead.
-***************************************************************/
+* Procedure:
+*   1. Advance bullets
+*   2. Advance rocks
+*   3. Advance ships
+*   4. Screen wrap all entities
+*   5. Handle the Collisions and increment score call other functions if needed
+********************************************************************************/
 
 static void updatePositions(){
     //index through the asteroids coordinates.
     u8 i = 0;
     u8 j;
+
     do
     {
-        if(rocks[i].isAlive == 1)
+        // 1. Move rocks and bullets and ships
+        j = 0;
+
+        //We are checking to see if the asteroid is dead because we don't want
+        // to move dead entities
+        byteParam2 = i;
+        if (rocks[i].isAlive == 1)
         {
-            //Screen rapping X+
-            if (rocks[i].x > FIX16(302))
-            {
-                rocks[i].x = FIX16(-15);
-            }
-            //Screen Rapping X-
-            if(rocks[i].x < FIX16(-15))
-            {
-                rocks[i].x = FIX16(302);
-            }
-            //Screen Rap Y+
-            if (rocks[i].y > FIX16(206))
-            {
-                rocks[i].y = FIX16(-15);
-            }
-            //Screen Rap Y-
-            if (rocks[i].y < FIX16(-15))
-            {
-                rocks[i].y = FIX16(206);
+            rocks[i].x = fix16Add(rocks[i].x, rocks[i].velX);
+            rocks[i].y = fix16Add(rocks[i].y, rocks[i].velY);
+            byteParam1 = rockType;
+            screenWrapElements();
+            SPR_setPosition(rocks[i].sprite, fix16ToInt(rocks[i].x), fix16ToInt(rocks[i].y));
+        }
+        if (bullets[i].coord.isAlive == 1)
+        {
+            bullets[i].coord.x = fix16Add(bullets[i].coord.x, bullets[i].coord.velX);
+            bullets[i].coord.y = fix16Add(bullets[i].coord.y, bullets[i].coord.velY);
+            byteParam1 = bulletType;
+            screenWrapElements();
+            SPR_setPosition(bullets[i].coord.sprite, fix16ToInt(bullets[i].coord.x), fix16ToInt(bullets[i].coord.y));
+        }
+        if (i < numPlayers)
+        {
+            if (ships[i].coord.isAlive == 1) {
+                ships[i].coord.x = fix16Add(ships[i].coord.x, ships[i].coord.velX);
+                ships[i].coord.y = fix16Add(ships[i].coord.y, ships[i].coord.velY);
+                byteParam1 = shipType;
+                screenWrapElements();
+                SPR_setPosition(ships[i].coord.sprite, fix16ToInt(ships[i].coord.x), fix16ToInt(ships[i].coord.y));
             }
         }
-        if(bullets[i].isAlive == 1)
-        {
-            //Screen rapping X+
-            if(bullets[i].x > FIX16(302))
-            {
-                bullets[i].x = FIX16(-15);
-            }
-            //Screen Rapping X-
-            if(bullets[i].x < FIX16(-15))
-            {
-                bullets[i].x = FIX16(302);
-            }
-            //Screen Rap Y+
-            if(bullets[i].y > FIX16(206))
-            {
-                bullets[i].y = FIX16(-15);
-            }
-            //Screen Rap Y-
-            if(bullets[i].y < FIX16(-15))
-            {
-                bullets[i].y = FIX16(206);
-            }
-        }
-        if(i < numPlayers)
-        {
-            if(ships[i].isAlive == 1)
-            {
-                //Screen rapping X+
-                if(ships[i].x > FIX16(302))
-                {
-                    ships[i].x = FIX16(-15);
-                }
-                //Screen Rapping X-
-                if(ships[i].x < FIX16(-15))
-                {
-                    ships[i].x = FIX16(302);
-                }
-                //Screen Rap Y+
-                if(ships[i].x > FIX16(206))
-                {
-                    ships[i].x = FIX16(-15);
-                }
-                //Screen Rap Y-
-                if(ships[i].x < FIX16(-15))
-                {
-                    ships[i].x = FIX16(206);
-                }
-            }
-        }
+
         //Check to see if the bullets need to die
         //due to how long they've been on screen
         //not working
-        if (bullets[i].isAlive == 1)
+        if (bullets[i].coord.isAlive == 1)
         {
             if(bullets[i].bulletLimit == counter)
             {
-                SPR_releaseSprite(bullets[i].sprite);
-                bullets[i].isAlive = 0;
+                SPR_releaseSprite(bullets[i].coord.sprite);
+                bullets[i].coord.isAlive = 0;
                 /*
                 //debugging for showing the Index of deleted bullet
                 char look[16];
@@ -1046,15 +1077,13 @@ static void updatePositions(){
         //if collide destroy asteroid and bullet
         //System will take the indexed asteroid i
         //Loop through all bullets on screen and see if any are hitting it
-        //only check for collisions with asteroids which is 0 - 31
-        //This might be a bad idea... It could mess up the amount of time
-        //the loop takes to complete.
+        //only check for collisions with asteroids.
         //j is bullets
         j = 0;
         do {
-            if(bullets[j].isAlive = 1)
+            if(bullets[j].coord.isAlive == 1)
             {
-                if (checkCollision(rocks[i].x, rocks[i].y, rocks[i].hitBox, bullets[j].x, bullets[j].y, bullets[j].hitBox) == 1)
+                if (checkCollision(i, rockType, j, bulletType) == 1)
                 {
                     //Add to the score when certain asteroids are hit
                     if(rocks[i].hitBox == 16)
@@ -1070,12 +1099,12 @@ static void updatePositions(){
                         Score += 100;
                     }
                     SPR_releaseSprite(rocks[i].sprite);
-                    SPR_releaseSprite(bullets[j].sprite);
+                    SPR_releaseSprite(bullets[j].coord.sprite);
                     createAsteroids(i);
                     //play asteroid destruction animation
                     explosion();
                     rocks[i].isAlive = 0;
-                    bullets[j].isAlive = 0;
+                    bullets[j].coord.isAlive = 0;
                     numAsteroids--;
                     displayScore();
                 }
@@ -1083,37 +1112,7 @@ static void updatePositions(){
             j++;
         } while(j < playerAmmunition);
 
-        //check if a rock has collided with the ships. If the code is slow
-        //replace the do while with a switch statement
-        j = 0;
-        do {
-
-        } while(j < numPlayers);
-
-        //We are checking to see if the asteroid is dead again because it
-        //could have died while we were doing collision.
-        if (rocks[i].isAlive == 1)
-        {
-            rocks[i].x = fix16Add(rocks[i].x, rocks[i].velX);
-            rocks[i].y = fix16Add(rocks[i].y, rocks[i].velY);
-            SPR_setPosition(rocks[i].sprite, fix16ToInt(rocks[i].x), fix16ToInt(rocks[i].y));
-        }
-        if (bullets[i].isAlive == 1)
-        {
-            bullets[i].x = fix16Add(bullets[i].x, bullets[i].velX);
-            bullets[i].y = fix16Add(bullets[i].y, bullets[i].velY);
-            SPR_setPosition(bullets[i].sprite, fix16ToInt(bullets[i].x), fix16ToInt(bullets[i].y));
-        }
-        j = 0;
-        do {
-            if (ships[i].isAlive == 1)
-            {
-                ships[i].x = fix16Add(ships[j].x, ships[j].velX);
-                ships[i].y = fix16Add(ships[j].y, ships[j].velY);
-                SPR_setPosition(ships[j].sprite, fix16ToInt(ships[j].x), fix16ToInt(ships[j].y));
-            }
-            j++;
-        } while(j < numPlayers);
+        // increment through all entities
         i++;
     } while (i < 32);
 }
@@ -1124,6 +1123,10 @@ static void updatePositions(){
 * have collided and it will release the sprites from memory
 * will call the create asteroid function. Function will return
 * a 1 when the asteroids touch for now.
+*
+* Version 2.0.0 I should maybe change this so it passes two 16-
+* bit pointers which will then pass via 32 bit bus saturation.
+* Might be a bit faster than passing 4 8-bit values.
 ***************************************************************/
 
 /********
@@ -1133,10 +1136,40 @@ if (abs(fix16Sub(fix16Add(positions[j][0], intToFix16(hitBox[j])), fix16Add(posi
 
 ********/
 
-u8 checkCollision(fix16 oneX, fix16 oneY, u8 oneHitBox, fix16 twoX, fix16 twoY, twoHitBox)
+u8 checkCollision(u8 index1, u8 objectType1, u8 index2, u8 objectType2)
 {
-    if (abs(fix16Sub(fix16Add(twoX, intToFix16(twoHitBox)), fix16Add(oneX, intToFix16(oneHitBox)))) < FIX16(oneHitBox) &&
-        abs(fix16Sub(fix16Add(twoY, intToFix16(twoHitBox)), fix16Add(oneY, intToFix16(oneHitBox)))) < FIX16(oneHitBox))
+    Entity * object1;
+    Entity * object2;
+
+    //determine the first object
+    switch(objectType1)
+    {
+        case rockType:
+        object1 = &rocks[index1];
+        break;
+        case bulletType:
+        object1 = &bullets[index1].coord;
+        break;
+        case shipType:
+        object1 = &ships[index1].coord;
+        break;
+    }
+    //determine the second object
+    switch(objectType2)
+    {
+        case rockType:
+        object2 = &rocks[index2];
+        break;
+        case bulletType:
+        object2 = &bullets[index2].coord;
+        break;
+        case shipType:
+        object2 = &ships[index2].coord;
+        break;
+    }
+
+    if (abs(fix16Sub(fix16Add(object2->x, intToFix16(object2->hitBox)), fix16Add(object1->x, intToFix16(object1->hitBox)))) < FIX16(object1->hitBox) &&
+        abs(fix16Sub(fix16Add(object2->y, intToFix16(object2->hitBox)), fix16Add(object1->y, intToFix16(object1->hitBox)))) < FIX16(object1->hitBox))
         return 1;
     else
         return 0;
@@ -1220,41 +1253,41 @@ static void displayScore()
 static void checkRespawnShip()
 {
     //If player 1 is dead start the countdown to re-spawn the player
-    if (positions[46][0] == FIX16(400) && timer[0] == -1)
+    if (ships[0].coord.isAlive == 0 && ships[0].timer == -1)
     {
         if (counter == 0)
         {
-            timer[0] = 39;
+            ships[0].timer = 39;
         }
         else
         {
-            timer[0] = (counter - 1);
+            ships[0].timer = (counter - 1);
         }
     }
-    if (positions[47][0] == FIX16(400) && cooperative == 1 && timer[1] == -1)
+    if (ships[1].coord.isAlive == 0 && cooperative == 1 && ships[1].timer == -1)
     {
         if (counter == 0)
         {
-            timer[1] = 39;
+            ships[1].timer = 39;
         }
         else
         {
-            timer[1] = (counter - 1);
+            ships[1].timer = (counter - 1);
         }
     }
-    else if (timer[0] == counter && player1 != 0 && positions[46][0] == FIX16(400))
+    else if (ships[0].timer == counter && ships[0].lives != 0 && ships[0].coord.isAlive == 0)
     {
-        rotation[0] = 0;
-        positions[46][0] = FIX16(160);
-        positions[46][1] = FIX16(112);
-        velocity[46][0] = 0;
-        velocity[46][1] = 0;
-        sprites[46] = SPR_addSprite(&ship_sprite, fix16ToInt(positions[46][0]), fix16ToInt(positions[46][1]), TILE_ATTR(PAL0, TRUE, FALSE, FALSE));
+        ships[0].rotation = 0;
+        ships[0].coord.x = FIX16(160);
+        ships[0].coord.y = FIX16(112);
+        ships[0].coord.velX = 0;
+        ships[0].coord.velY = 0;
+        ships[0].coord.sprite = SPR_addSprite(&ship_sprite, fix16ToInt(ships[0].coord.x), fix16ToInt(ships[0].coord.y), TILE_ATTR(PAL0, TRUE, FALSE, FALSE));
         //Default ship resting
         shipAnimation(46);
-        hitBox[46] = 8;
-        player1--;
-        timer[0] = -1;
+        ships[0].coord.hitBox = 8;
+        ships[0].lives--;
+        ships[0].timer = -1;
     }
 }
 
