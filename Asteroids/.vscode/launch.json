@@ -1,0 +1,46 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "preLaunchTask": "Debug-Build Run",
+            "name": "Make and Run-Debugger",
+            "gdbpath": "C:\\SGDK\\bin\\gdb.exe",
+            "executable":"${workspaceRoot}\\out\\rom.out",
+            "type": "gdb",
+            "request": "attach",
+            //"target": "D:\\MD\\MegaXor-master\\Xor\\out\\rom.out",
+            "target": "localhost:6868",
+            "cwd": "${workspaceRoot}",
+            "valuesFormatting": "parseText",
+            "remote": true            
+        },
+        {
+            "preLaunchTask": "Run Emulator Debugger",
+            "name": "Run-Debugger Only",
+            "gdbpath": "C:\\SGDK\\bin\\gdb.exe",
+            "executable":"${workspaceRoot}\\out\\rom.out",
+            "type": "gdb",
+            "request": "attach",
+            //"target": "D:\\MD\\MegaXor-master\\Xor\\out\\rom.out",
+            "target": "localhost:6868",
+            "cwd": "${workspaceRoot}",
+            "valuesFormatting": "parseText",
+            "remote": true            
+        },
+        {
+            "name": "Connect Debugger",
+            "gdbpath": "C:\\SGDK\\bin\\gdb.exe",
+            "executable":"${workspaceRoot}\\out\\rom.out",
+            "type": "gdb",
+            "request": "attach",
+            //"target": "D:\\MD\\MegaXor-master\\Xor\\out\\rom.out",
+            "target": "localhost:6868",
+            "cwd": "${workspaceRoot}",
+            "valuesFormatting": "parseText",
+            "remote": true            
+        }
+    ]
+}

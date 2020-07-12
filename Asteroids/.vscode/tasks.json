@@ -1,30 +1,114 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
-    "version": "0.1.0",
+    "version": "2.0.0",
     "command": "cmd",
-    "isShellCommand": true,
-    "args": ["/C"],
-    "showOutput": "always",
+    "type": "shell",
+    "args": [
+        "/C"
+    ],
+    "reveal": "always",
     "tasks": [
         {
-            "isBuildCommand": true,
-            "suppressTaskName": true,
-            "echoCommand": true,
-            "taskName": "make",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "label": "make",
             "args": [
-                "C:\\SGDK\\bin\\make", "-f", "C:\\SGDK\\makefile.gen"
-            ]
-
+                "C:\\SGDK\\bin\\make",
+                "-f",
+                "C:\\SGDK\\makefile.gen"
+            ],
+            "problemMatcher": []
         },
         {
-            "suppressTaskName": true,
-            "echoCommand": true,
-            "taskName": "clean",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "group": "build",
+            "label": "clean",
             "args": [
-                "C:\\SGDK\\bin\\bin\\make", "clean", "-f", "C:\\SGDK\\makefile.gen"
+                "C:\\SGDK\\bin\\make",
+                "clean",
+                "-f",
+                "C:\\SGDK\\makefile.gen"
             ]
-
+        },
+        {
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "group": "build",
+            "label": "debug",
+            "args": [
+                "C:\\SGDK\\bin\\make",
+                "clean",
+                "-f",
+                "C:\\SGDK\\makefile.gen",
+                "debug"
+            ]
+        },
+        {
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "group": "build",
+            "label": "Debug-Build Run",
+            "args": [
+                "debug-execute.bat"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "group": "build",
+            "label": "Run Emulator Debugger",
+            "args": [
+                "emulator-start.bat"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "gcc.exe build active file",
+            "command": "C:\\SGDK\\bin\\gcc.exe",
+            "args": [
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+            ],
+            "options": {
+                "cwd": "C:\\SGDK\\bin"
+            }
         }
     ]
 }

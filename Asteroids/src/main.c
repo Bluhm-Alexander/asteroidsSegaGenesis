@@ -17,7 +17,14 @@
 * from as many functions as possible making code lean without sacrificing
 * performance.
 ****************************************************************************/
-//refactoring the code to be a bit more organized
+
+typedef enum {
+    PLAYER_ONE,
+    PLAYER_TWO,
+    PLAYER_THREE,
+    PLAYER_FOUR
+}player_idx_type;
+
 typedef struct {
     Sprite* sprite;
     fix16 x;
@@ -268,7 +275,7 @@ void titleScreen()
         {
             SYS_disableInts();
             //display image
-            VDP_drawImageEx(PLAN_A, &bga_title, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 10, 12, FALSE, TRUE);
+            VDP_drawImageEx(BG_A, &bga_title, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 10, 12, FALSE, TRUE);
             //Tileset was indexing with bga_gameover causing a bug which has been fixed.
             ind += bga_title.tileset->numTile;
             SYS_enableInts();
@@ -345,7 +352,7 @@ u8 gameOver()
         displayScore();
         SYS_disableInts();
         //display image
-        VDP_drawImageEx(PLAN_A, &bga_gameover, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 16, 13, FALSE, TRUE);
+        VDP_drawImageEx(BG_A, &bga_gameover, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 16, 13, FALSE, TRUE);
         ind += bga_gameover.tileset->numTile;
         SYS_enableInts();
         //This is a signal to not run this code more than once
@@ -448,20 +455,20 @@ static void setupLevel(s16 level) //I might remove this parameter later because 
         if (cooperative == 0)
         {
             //Player 1
-            ships[0].coord.angle = 0;
-            ships[0].coord.x = FIX16(160);
-            ships[0].coord.y = FIX16(112);
-            ships[0].coord.velX = FIX16(0);
-            ships[0].coord.velY = FIX16(0);
-            ships[0].coord.sprite = SPR_addSprite(&ship_sprite, fix16ToInt(ships[0].coord.x), fix16ToInt(ships[0].coord.y), TILE_ATTR(PAL0, TRUE, FALSE, FALSE));
+            ships[PLAYER_ONE].coord.angle = 0;
+            ships[PLAYER_ONE].coord.x = FIX16(160);
+            ships[PLAYER_ONE].coord.y = FIX16(112);
+            ships[PLAYER_ONE].coord.velX = FIX16(0);
+            ships[PLAYER_ONE].coord.velY = FIX16(0);
+            ships[PLAYER_ONE].coord.sprite = SPR_addSprite(&ship_sprite, fix16ToInt(ships[PLAYER_ONE].coord.x), fix16ToInt(ships[PLAYER_ONE].coord.y), TILE_ATTR(PAL0, TRUE, FALSE, FALSE));
             //Default ship resting
-            shipAnimation(0);
-            ships[0].coord.hitBox = 8;
-            ships[0].coord.isAlive = 1;
-            ships[0].lives = 3;
-            ships[0].bulletIndex = 0;
+            shipAnimation(PLAYER_ONE);
+            ships[PLAYER_ONE].coord.hitBox = 8;
+            ships[PLAYER_ONE].coord.isAlive = 1;
+            ships[PLAYER_ONE].lives = 3;
+            ships[PLAYER_ONE].bulletIndex = 0;
             Score = 0;
-            ships[0].timer = -1;
+            ships[PLAYER_ONE].timer = -1;
         }
     }
     displayScore();
@@ -559,7 +566,7 @@ static void addCounter()
 * for when the DPAD UP button is pressed down.
 *
 * This function Modifies the rotation variable by a factor of 6
-* Function also modifies ship velocity at [46].
+* Function also modifies ship velocity at [PLAYER_ONE].
 *
 * The only inputs I need to worry about here are the DPAD and the A, B
 * and C buttons all of which will fire a bullet. Calls shipAnimation()
@@ -594,7 +601,7 @@ static void handleInput()
             ships[0].rotation = FIX16(0);
         }
         //Now update the ship animation.
-        shipAnimation(46);
+        shipAnimation(PLAYER_ONE);
     }
 
     else if (value & BUTTON_RIGHT)
@@ -606,7 +613,7 @@ static void handleInput()
             ships[0].rotation = FIX16(354);
         }
         //Now we update the animation
-        shipAnimation(46);
+        shipAnimation(PLAYER_ONE);
     }
 
 
@@ -614,13 +621,13 @@ static void handleInput()
     {
         if (pressed == -1)
         {
-            fireBullets(46);
+            fireBullets(PLAYER_ONE);
             pressed = counter % 20; //counter % 20
         }
 
         else if ((counter % 20) == pressed)
         {
-            fireBullets(46);
+            fireBullets(PLAYER_ONE);
         }
     }
 
@@ -750,7 +757,7 @@ u16 convertToTable(fix16 degrees)
 * radians. calculates the trajectory of the ship based on acceleration and
 * angle.
 *
-* This function modifies the velocity of the ship which is at position 46.
+* This function modifies the velocity of the ship which is at position PLAYER_ONE.
 * I may need to switch all of these to FIX16 because of the additional
 * processing power I would need to do 32 bit fixes.
 ****************************************************************************/
@@ -791,7 +798,7 @@ static void accelarateShip(u8 shipIndex) {
 *            MODIFIES: indexBullets
 *
 * This function is called by the handleInput() function when the B or C
-* buttons are pressed. Bullets can be created at position 32 - 46. Positions
+* buttons are pressed. Bullets can be created at position 32 - PLAYER_ONE. Positions
 * 0 - 31 are reserved for asteroids
 *
 * Spawn a bullet at the ships position. There can be no more than 30 bullets
@@ -817,6 +824,9 @@ static void fireBullets(u8 shipIndex)
                 SPR_addSprite(&bullet, fix16ToInt(bullets[ships[shipIndex].bulletIndex].coord.x),
                                               fix16ToInt(bullets[ships[shipIndex].bulletIndex].coord.y),
                                                TILE_ATTR(PAL0, TRUE, FALSE, FALSE));
+
+            //Set the bullets condition to livning so that it's position is updated and it collides with rocks
+            bullets[ships[shipIndex].bulletIndex].coord.isAlive = TRUE;
         }
         // else if the bullet queue is full take an existing bullet and its sprite
         // and set it to the firing position of the ship
@@ -1202,36 +1212,36 @@ static void displayScore()
                     VDP_drawText(look, 0, 6);
 
     //000,000,001
-    VDP_drawImageEx(PLAN_A, images[(Score % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 10, 0, FALSE, TRUE);
+    VDP_drawImageEx(BG_A, images[(Score % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 10, 0, FALSE, TRUE);
     ind += images[Score % 10]->tileset->numTile; // *(*(images[counter % 10]).tileset).numTile;
     //000,000,010 Trying something really stupid
-    VDP_drawImageEx(PLAN_A, images[((Score / 10) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 9, 0, FALSE, TRUE);
+    VDP_drawImageEx(BG_A, images[((Score / 10) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 9, 0, FALSE, TRUE);
     ind += images[((Score / 10) % 10)]->tileset->numTile;
     //000,000,100
-    VDP_drawImageEx(PLAN_A, images[((Score / 100) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 8, 0, FALSE, TRUE);
+    VDP_drawImageEx(BG_A, images[((Score / 100) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 8, 0, FALSE, TRUE);
     ind += images[((Score / 100) % 10)]->tileset->numTile;
     //000,001,000
     if (Score >= 1000)
     {
-        VDP_drawImageEx(PLAN_A, images[((Score / 1000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 7, 0, FALSE, TRUE);
+        VDP_drawImageEx(BG_A, images[((Score / 1000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 7, 0, FALSE, TRUE);
         ind += images[((Score / 1000) % 10)]->tileset->numTile;
     }
     //000,010,000
     if (Score >= 10000)
     {
-        VDP_drawImageEx(PLAN_A, images[((Score / 10000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 6, 0, FALSE, TRUE);
+        VDP_drawImageEx(BG_A, images[((Score / 10000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 6, 0, FALSE, TRUE);
         ind += images[((Score / 10000) % 10)]->tileset->numTile;
     }
     //000,100,000
     if (Score >= 100000)
     {
-        VDP_drawImageEx(PLAN_A, images[((Score / 100000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 5, 0, FALSE, TRUE);
+        VDP_drawImageEx(BG_A, images[((Score / 100000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 5, 0, FALSE, TRUE);
         ind += images[((Score / 100000) % 10)]->tileset->numTile;
     }
     //001,000,000
     if (Score >= 1000000)
     {
-        VDP_drawImageEx(PLAN_A, images[((Score / 1000000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 4, 0, FALSE, TRUE);
+        VDP_drawImageEx(BG_A, images[((Score / 1000000) % 10)], TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind), 4, 0, FALSE, TRUE);
         ind += images[((Score / 1000000) % 10)]->tileset->numTile;
     }
     SYS_enableInts();
@@ -1284,7 +1294,7 @@ static void checkRespawnShip()
         ships[0].coord.velY = 0;
         ships[0].coord.sprite = SPR_addSprite(&ship_sprite, fix16ToInt(ships[0].coord.x), fix16ToInt(ships[0].coord.y), TILE_ATTR(PAL0, TRUE, FALSE, FALSE));
         //Default ship resting
-        shipAnimation(46);
+        shipAnimation(PLAYER_ONE);
         ships[0].coord.hitBox = 8;
         ships[0].lives--;
         ships[0].timer = -1;
@@ -1314,6 +1324,6 @@ static void checkLevelOver()
 *********************************************************************************/
 static void clearScreen()
 {
-    VDP_clearPlan(PLAN_A, FALSE);
+    VDP_clearPlane(BG_A, FALSE);
     SPR_reset();
 }
