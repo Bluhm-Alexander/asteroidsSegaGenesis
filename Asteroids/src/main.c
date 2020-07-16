@@ -466,7 +466,7 @@ static void setupLevel(s16 level) //I might remove this parameter later because 
     }
     displayScore();
 
-    //One For Loop to set up all rocks
+    //One Loop to set up all rocks
     //In this case we are setting up 4 rocks
     index = 0;
     do {
@@ -594,7 +594,7 @@ static void handleInput()
             ships[0].rotation = FIX16(0);
         }
         //Now update the ship animation.
-        shipAnimation(46);
+        shipAnimation(0);
     }
 
     else if (value & BUTTON_RIGHT)
@@ -606,7 +606,7 @@ static void handleInput()
             ships[0].rotation = FIX16(354);
         }
         //Now we update the animation
-        shipAnimation(46);
+        shipAnimation(0);
     }
 
 
@@ -614,13 +614,13 @@ static void handleInput()
     {
         if (pressed == -1)
         {
-            fireBullets(46);
+            fireBullets(0);
             pressed = counter % 20; //counter % 20
         }
 
         else if ((counter % 20) == pressed)
         {
-            fireBullets(46);
+            fireBullets(0);
         }
     }
 
@@ -630,6 +630,7 @@ static void handleInput()
     }
 
     //If Co-Operative game play is selected check for second controller input
+    //need to switch to proper indexes
     if (cooperative == 1)
     {
         if (value2 & BUTTON_UP)
@@ -832,17 +833,8 @@ static void fireBullets(u8 shipIndex)
         bullets[ships[shipIndex].bulletIndex].coord.velX = fix16Add((cosFix16(test) * FIX16(0.08)), ships[shipIndex].coord.velX);
         bullets[ships[shipIndex].bulletIndex].coord.velY = fix16Add(-(sinFix16(test) * FIX16(0.08)), ships[shipIndex].coord.velY);
 
-        //Make sure the bullets don't go too fast.
-        // Now that I think about it I'm not too sure if this
-        // is necessary.
-        if (bullets[ships[shipIndex].bulletIndex].coord.velX > FIX16(6))
-        {
-            bullets[ships[shipIndex].bulletIndex].coord.velX = FIX16(6);
-        }
-        if (bullets[ships[shipIndex].bulletIndex].coord.velY)
-        {
-            bullets[ships[shipIndex].bulletIndex].coord.velY = FIX16(6);
-        }
+        //set the bullet to living
+        bullets[ships[shipIndex].bulletIndex].coord.isAlive = 1;
 
         //Bullet Limits control the distance at which the bullets can go
         //before they die
@@ -859,12 +851,12 @@ static void fireBullets(u8 shipIndex)
 
         bullets[ships[shipIndex].bulletIndex].bulletLimit = temp;
 
-        /*
-        //debugging show index
+/*
+        //debugging
         char rad[16];
-        uint16ToStr(bulletLimit[indexBullets - 32], rad, 3);
+        fix16ToStr(bullets[ships[shipIndex].bulletIndex].coord.velX, rad, 3);
         VDP_drawText(rad, 14, 17);
-        */
+*/
 
         //increment the index by 1
         ships[shipIndex].bulletIndex += 1;
@@ -924,12 +916,12 @@ static void shipAnimation(u8 shipIndex)
         SPR_setVFlip(ships[shipIndex].coord.sprite, TRUE);
     }
 
-    /*
+/*
     //Debugging Show Index of Frame used
     char str2[16];
-    uint16ToStr(frame, str2, 2);
+    uintToStr(frame, str2, 2);
     VDP_drawText(str2, 9, 12);
-    */
+*/
     if (ships[shipIndex].coord.isAlive == 1)
     {
         SPR_setFrame(ships[shipIndex].coord.sprite, frame);
@@ -1044,6 +1036,13 @@ static void updatePositions(){
             byteParam1 = bulletType;
             screenWrapElements();
             SPR_setPosition(bullets[i].coord.sprite, fix16ToInt(bullets[i].coord.x), fix16ToInt(bullets[i].coord.y));
+            /*
+            //debugging
+            char bulAccel[5];
+            fix16ToStr(bullets[i].coord.velY, bulAccel, 3);
+            VDP_drawText("bullet accel Y: ", 0, 18);
+            VDP_drawText(bulAccel, 17, 18);
+            */
         }
         if (i < numPlayers)
         {
