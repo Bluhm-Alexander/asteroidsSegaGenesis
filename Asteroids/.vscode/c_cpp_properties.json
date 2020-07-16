@@ -3,16 +3,19 @@
         {
             "name": "Win32",
             "includePath": [
-                "C:\\SGDK\\inc",
-                "C:\\SGDK\\res",
-                "C:\\Users\\super\\Documents\\Genesis Development\\Asteroids\\asteroidsSegaGenesis\\Asteroids\\res"
+                "${workspaceRoot}",
+                "${GDK_WIN}\\**",
+                "${workspaceRoot}\\res"
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": ""
+                "databaseFilename": "",
+                "path": [
+                    "${workspaceRoot}"
+                ]
             },
             "intelliSenseMode": "gcc-x64",
-            "compilerPath": "C:\\SGDK\\bin\\gcc.exe",
+            "compilerPath": "${GDK_WIN}\\bin\\gcc.exe",
             "cStandard": "c11",
             "cppStandard": "c++17"
         }
